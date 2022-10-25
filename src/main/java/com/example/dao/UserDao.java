@@ -4,6 +4,7 @@ import com.example.domain.User;
 
 import java.sql.*;
 import java.util.Map;
+
 public class UserDao {
 
     ConnectionMaker connectionMaker;
@@ -20,15 +21,15 @@ public class UserDao {
     private Connection makeConnection() throws SQLException {
         Map<String, String> env = System.getenv();
 
-        Connection c = DriverManager.getConnection(env.get("DB_HOST"),
-                    env.get("DB_USER"), env.get("DB_PASSWORD"));
+        Connection c = DriverManager.getConnection(env.get("DB_HOST"), env.get("DB_USER"), env.get("DB_PASSWORD"));
 
-            return c;
+        return c;
     }
-    public void add(User user) {
-        Connection c ;
 
-       try {
+    public void add(User user) {
+        Connection c = null;
+
+        try {
             // DB접속
             c = connectionMaker.makeConnection();
 
@@ -50,7 +51,7 @@ public class UserDao {
     }
 
     public User findById(String id) {
-        Connection c;
+        Connection c = null;
         try {
             // DB접속
             c = connectionMaker.makeConnection();
@@ -62,8 +63,7 @@ public class UserDao {
             // Query문 실행
             ResultSet rs = pstmt.executeQuery();
             rs.next();
-            User user = new User(rs.getString("id"), rs.getString("name"),
-                    rs.getString("password"));
+            User user = new User(rs.getString("id"), rs.getString("name"), rs.getString("password"));
 
             rs.close();
             pstmt.close();
@@ -73,6 +73,70 @@ public class UserDao {
 
         } catch (SQLException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    public void deleteAll() throws SQLException {
+        Connection c = null;
+        PreparedStatement ps = null;
+
+        try {
+            c = connectionMaker.makeConnection();
+            ps = c.prepareStatement("DELETE FROM users");
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            throw e;
+        } finally {
+            if (ps != null) {
+                try {
+                    ps.close();
+                } catch (SQLException e) {
+                }
+            }
+            if (c != null) {
+                try {
+                    c.close();
+                } catch (SQLException e) {
+                }
+            }
+        }
+
+
+    }
+
+    public int getCount() throws SQLException {
+        Connection c = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+
+        try {
+            c = connectionMaker.makeConnection();
+            ps = c.prepareStatement("SELECT count(*) FROM users");
+            rs = ps.executeQuery();
+            rs.next();
+            int count = rs.getInt(1);
+            return count;
+        } catch (SQLException e) {
+            throw e;
+        } finally {
+            if (rs != null) {
+                try {
+                    rs.close();
+                } catch (SQLException e) {
+                }
+            }
+            if (ps != null) {
+                try {
+                    ps.close();
+                } catch (SQLException e) {
+                }
+            }
+            if (c != null) {
+                try {
+                    c.close();
+                } catch (SQLException e) {
+                }
+            }
         }
     }
 }
